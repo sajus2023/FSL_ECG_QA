@@ -100,7 +100,6 @@ class MetaLearner(nn.Module):
 class AttentionMapper(nn.Module):
     def __init__(self, dim_clip, dim_gpt_embedding, prefix_length):
         super(AttentionMapper, self).__init__()
-        # print(88888888,dim_clip, dim_gpt_embedding, prefix_length)
         self.dim_V = dim_gpt_embedding
         self.num_heads = 8
         self.prefix_length = prefix_length
@@ -209,3 +208,4 @@ class TextSampler:
                     else:
                         tokens = torch.cat((tokens, next_token), dim=1)
         return tokens
+

@@ -143,7 +143,7 @@ python inference.py \
 ## 💭 Correspondence
 If you have any questions or suggestions, feel free to reach out via [email](mailto:jialu.tang@tue.nl) or open an [issue](https://github.com/tang-jia-lu/ECG_QA/issues) on GitHub.
 
-## Citing FedNS
+## Citing
 If you use any content from this repository for your work, please cite the following:
 
 ```bibtex

@@ -147,10 +147,15 @@ If you have any questions or suggestions, feel free to reach out via [email](mai
 If you use any content from this repository for your work, please cite the following:
 
 ```bibtex
-@article{tang2024electrocardiogram,
-  title={Electrocardiogram-Language Model for Few-Shot Question Answering with Meta Learning},
-  author={Tang, Jialu and Xia, Tong and Lu, Yuan and Mascolo, Cecilia and Saeed, Aaqib},
-  journal={arXiv preprint arXiv:2410.14464},
-  year={2024}
+@inproceedings{tang2025chil,
+  title     = {Proceedings of the sixth Conference on Health, Inference, and Learning},
+  author    = {Tang, Jialu and Xia, Tong and Lu, Yuan and Mascolo, Cecilia and Saeed, Aaqib},
+  booktitle = {Proceedings of the Sixth Conference on Health, Inference, and Learning},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {287},
+  pages     = {89--104},
+  publisher = {PMLR},
+  address   = {Berkeley, CA, USA},
+  year      = {2025}
 }
 ```

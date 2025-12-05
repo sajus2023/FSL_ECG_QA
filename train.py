@@ -34,7 +34,13 @@ def write_data_to_txt(file_path, data):
             file.write(data)
 
 def main_episodic():
-    gpt_tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    # Load tokenizer with error handling for config issues
+    try:
+        gpt_tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
+    except AttributeError:
+        # Fallback: load from HuggingFace Hub directly
+        print(f"Warning: Could not load tokenizer from {args.model_name}, trying direct HF load...")
+        gpt_tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-1B", trust_remote_code=True)
     experiment_id = "{}_{}-way_{}-shot{}".format(args.experiment_id, args.n_way, args.k_spt,args.model_type)
     meta = MetaTrainer(args, experiment_id, is_pretrained=False).to(device)
     if args.frozen_features==1:

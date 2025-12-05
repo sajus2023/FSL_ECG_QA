@@ -18,8 +18,15 @@ class MetaLearner(nn.Module):
         self.mapper_dim = 768
         
         self.mapper_type = mapper_type
-        self.gpt_tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.gpt = AutoModelForCausalLM.from_pretrained(model_name).cuda()
+        # Load tokenizer and model with error handling
+        try:
+            self.gpt_tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+            self.gpt = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True).cuda()
+        except (AttributeError, OSError) as e:
+            print(f"Warning: Could not load from {model_name}: {e}")
+            print("Falling back to loading from HuggingFace Hub...")
+            self.gpt_tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-1B", trust_remote_code=True)
+            self.gpt = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-1B", trust_remote_code=True).cuda()
         
         for param in self.gpt.parameters():
             param.requires_grad = False

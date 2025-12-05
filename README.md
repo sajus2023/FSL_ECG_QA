@@ -25,6 +25,8 @@
 
 ## 📢 Updates
 
+[12/2025] **Python 3.12 Migration:** This fork has been migrated to Python 3.12. See [MIGRATION.md](MIGRATION.md) for details.
+
 [04/2025] Accepted to CHIL 2025
 
 [06/2025] [Code](https://github.com/Tang-Jia-Lu/FSL_ECG_QA), [Model](https://huggingface.co/jialucode/FSL_ECG_QA/), and [Dataset](https://huggingface.co/datasets/jialucode/FSL_ECG_QA_Dataset/) have been released.
@@ -44,24 +46,36 @@ Electrocardiogram (ECG) interpretation requires specialized expertise, often inv
 - **🌐 Model Generalization:** LLM-agnostic design ensures broad transferability and robustness.
 
 ## 🔧 Requirements
-###  Environment 
+###  Environment
 
-1. **Clone and install [fairseq-signals](https://github.com/Jwoo5/fairseq-signals):**
+**Python version:** Python 3.12
+
+> **New to this project?** See [QUICKSTART.md](QUICKSTART.md) for a step-by-step getting started guide!
+
+### Quick Setup (Automated)
+Use the automated setup script for easy installation:
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+### Manual Setup
+
+1. **Clone and install [fairseq-signals](https://github.com/sajus2023/fairseq-signals) (Python 3.12 compatible fork):**
   ```bash
-  git clone https://github.com/Jwoo5/fairseq-signals.git
+  git clone https://github.com/sajus2023/fairseq-signals.git
   cd fairseq-signals
   pip install --editable ./
+  cd ..
   ```
 
-2. **Python version:**  
-  Python 3.8
-
-3. **Install dependencies:**
+2. **Install dependencies:**
   ```bash
   pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-  pip install hydra-core omegaconf
-  pip install numpy scipy scikit-learn wfdb
+  pip install -r requirements.txt
   ```
+
+For detailed migration information, troubleshooting, and manual setup instructions, see [MIGRATION.md](MIGRATION.md).
 
 
 ### 📊 Dataset

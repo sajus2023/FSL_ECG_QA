@@ -32,7 +32,8 @@ class FSL_ECG_QA_DataLoader(Dataset):
     """
 
     def __init__(self, mode, batchsz, n_way, k_shot, k_query, seq_len, seq_len_a, repeats, tokenizer,
-                 prefix_length, startidx=0, all_ids=None, in_templates=None, prompt=1, paraphrased_path="", test_dataset=""):
+                 prefix_length, startidx=0, all_ids=None, in_templates=None, prompt=1, paraphrased_path="", test_dataset="",
+                 ecg_data_path=""):
         self.batchsz = batchsz  
         self.n_way = n_way  
         self.k_shot = k_shot  
@@ -52,18 +53,7 @@ class FSL_ECG_QA_DataLoader(Dataset):
         self.all_ids = all_ids
         self.prompt = prompt
         self.test_dataset=test_dataset
-        
-        # Set the base path depending on the test_dataset parameter
-        if test_dataset == "ptb-xl":
-            self.ecg_base_path = "/gpfs/home1/jtang1/multimodal_fsl_99/process_ptbxl2"
-            # self.ecg_base_path = "/path/to/ptbxl/data"  # Update with the actual path
-        elif test_dataset == "mimic":
-            self.ecg_base_path = "/gpfs/home1/jtang1/multimodal_fsl_99/process_mimic"
-            # self.ecg_base_path = "/path/to/mimic/data"  # Update with the actual path
-        else:
-            # Default path or raise an error for unknown dataset
-            self.ecg_base_path = "/gpfs/home1/jtang1/multimodal_fsl_99/process_ptbxl2"
-            # self.ecg_base_path = "/path/to/default/data"  # Update with the actual path
+        self.ecg_base_path=ecg_data_path
         
         json_data_ecg = change_ecg_to_qa(all_ids, in_templates, paraphrased_path, test_dataset=test_dataset)
       

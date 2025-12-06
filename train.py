@@ -60,11 +60,11 @@ def main_episodic():
     data_loader_train = FSL_ECG_QA_DataLoader(mode='train', n_way=args.n_way, k_shot=args.k_spt,k_query=args.k_qry, batchsz=args.batchsz_train,
                                       seq_len=args.seq_len, seq_len_a=args.seq_len_a,repeats=args.repeats, tokenizer=gpt_tokenizer,
                                       prefix_length=args.prefix_length,all_ids=class_qa, in_templates=train_temp, prompt=args.prompt,
-                                      paraphrased_path= args.paraphrased_path, test_dataset=args.test_dataset)
+                                      paraphrased_path= args.paraphrased_path, test_dataset=args.test_dataset, ecg_data_path=args.ecg_data_path)
     data_loader_test  = FSL_ECG_QA_DataLoader(mode='test', n_way=args.n_way, k_shot=args.k_spt,k_query=args.k_qry, batchsz=args.batchsz_test,
                                       seq_len=args.seq_len, seq_len_a=args.seq_len_a,repeats=args.repeats, tokenizer=gpt_tokenizer,
                                       prefix_length=args.prefix_length,all_ids=class_qa, in_templates=test_temp, prompt=args.prompt,
-                                      paraphrased_path= args.paraphrased_path, test_dataset=args.test_dataset)
+                                      paraphrased_path= args.paraphrased_path, test_dataset=args.test_dataset, ecg_data_path=args.ecg_data_path)
     db_train = DataLoader(data_loader_train, batch_size=args.task_num, shuffle=True, num_workers=args.num_workers, pin_memory=True,
                     drop_last=True)
     db_test = DataLoader(data_loader_test, batch_size=args.task_num, shuffle=True, num_workers=args.num_workers,
@@ -148,11 +148,9 @@ if __name__ == '__main__':
                           help='path to ./paraphrased containing trian/val/test ECG-QA json files')
     argparser.add_argument('--test_dataset', type=str, default="ptb-xl", choices=["ptb-xl", "mimic"], help='Dataset to use (ptb-xl or mimic)')
     argparser.add_argument('--model_name', type=str, help="path to llm model",
-                           default="/llm_checkpoint/llama3.1-8b") 
-                        #    default="/gpfs/home1/jtang1/multimodal_fsl_99/mimic_iv_infer/LLARVA/llama3_2_1B/")
+                           default="/llm_checkpoint/llama3.1-8b")
     argparser.add_argument('--model_type', type=str, help='model need to test', default="") # "acc_1" "acc2" "
-    argparser.add_argument('--data_root', type=str, default='ecg_qa')
-    argparser.add_argument('--data_path', type=str, help='the path to datasets', default='/home/jtang/data/ecg_qa_500')
+    argparser.add_argument('--ecg_data_path', type=str, help='the path to datasets', default='')
     argparser.add_argument('--question_type', type=str, help='question types, single-verify, single-choose, single-query, all', default='single-verify')
     argparser.add_argument('--epoch', type=int, help='epoch number', default=1)
     argparser.add_argument('--n_way', type=int, help='n way', default=5)

@@ -100,11 +100,11 @@ def main_inference():
         y_qry_mask_a = y_qry_mask_a.to(device)
         # qry_img_id stays on CPU
 
-        # Call finetunning with calc_metrics=True to get detailed metrics
+        # Call finetunning with calc_metrics=True and log_predictions=True for inference
         accs, bmr_metrics, bleu_metrics = meta_trainer.finetunning(
             x_spt, y_spt_q, y_spt_a, y_spt_mask_q, y_spt_mask_a,
             x_qry, y_qry_q, y_qry_mask_q, y_qry_mask_a, y_qry_a,
-            calc_metrics=True
+            calc_metrics=True, qry_ecg_ids=qry_img_id, log_predictions=True
         )
 
         accs_all_test.append((accs, bmr_metrics, bleu_metrics))

@@ -1,4 +1,5 @@
 import os
+import json
 from copy import deepcopy
 from compute_scores import compute_bmr_metrics, compute_bleu_metrics
 import numpy as np
@@ -24,6 +25,7 @@ class MetaTrainer(nn.Module):
         self.experiment_id=experiment_id
         self.model_weight = "{}.pt".format(experiment_id)
         self.log_file_path = args.logs_path + "/log_{}.txt".format(experiment_id)
+        self.json_log_path = args.logs_path + "/predictions_{}.json".format(experiment_id)
         self.new_words=new_words
         self.model_name=args.model_name
         self.mapper_type=args.mapper_type
@@ -97,7 +99,7 @@ class MetaTrainer(nn.Module):
 
         return accs, losses_q_
 
-    def finetunning(self, x_spt, y_spt_q, y_spt_a, y_spt_mask_q, y_spt_mask_a, x_qry, y_qry, y_qry_mask_q, y_qry_mask_a, qry_answer, calc_metrics=False):
+    def finetunning(self, x_spt, y_spt_q, y_spt_a, y_spt_mask_q, y_spt_mask_a, x_qry, y_qry, y_qry_mask_q, y_qry_mask_a, qry_answer, calc_metrics=False, qry_ecg_ids=None, log_predictions=False):
         bmr_results_list = []
         bleu_results_list = []
         
@@ -146,14 +148,47 @@ class MetaTrainer(nn.Module):
                 all_length = 0
                 gt_answer_list = []
                 pred_answer_list = []
-                for idx in range(x_qry[i].shape[0]):
+                k_qry = x_qry[i].shape[0]  # number of queries per task
+
+                for idx in range(k_qry):
                     gt_answer = self.model.gpt_tokenizer.decode(qry_answer[i][idx], skip_special_tokens=True).strip()
                     answer_length = int(torch.sum(y_qry_mask_a[i][idx][self.prefix_length:]))
                     pred_answer = self.model.gpt_tokenizer.decode(pred_tokens[all_length:all_length + answer_length], skip_special_tokens=True).strip()
+                    question = self.model.gpt_tokenizer.decode(y_qry[i][idx], skip_special_tokens=True).strip()
+
+                    # Get ECG ID if available
+                    # qry_ecg_ids is a flat list from DataLoader, calculate the flat index
+                    if qry_ecg_ids is not None:
+                        try:
+                            # Calculate flat index: task_offset + query_index
+                            flat_idx = i * k_qry + idx
+                            if isinstance(qry_ecg_ids, (list, tuple)):
+                                ecg_id = qry_ecg_ids[flat_idx]
+                            else:
+                                # If it's a tensor
+                                ecg_id = qry_ecg_ids[flat_idx].item() if hasattr(qry_ecg_ids[flat_idx], 'item') else qry_ecg_ids[flat_idx]
+                        except (IndexError, TypeError) as e:
+                            ecg_id = f"N/A (error: {e})"
+                    else:
+                        ecg_id = "N/A"
+
                     gt_answer_list.append(gt_answer)
                     pred_answer_list.append(pred_answer)
                     all_length += answer_length
-                    write_data_to_txt(self.log_file_path, ("GT answer: {}, Pred. answer: {}\n".format(gt_answer, pred_answer)))
+
+                    # Only log during inference (when log_predictions=True)
+                    if log_predictions:
+                        # Write to text log
+                        write_data_to_txt(self.log_file_path, ("ECG ID: {}, Question: {}, GT answer: {}, Pred. answer: {}\n".format(ecg_id, question, gt_answer, pred_answer)))
+
+                        # Write to JSON log for easier visualization
+                        prediction_entry = {
+                            "ecg_id": ecg_id,
+                            "question": question,
+                            "ground_truth": gt_answer,
+                            "prediction": pred_answer
+                        }
+                        write_json_log(self.json_log_path, prediction_entry)
 
                 bmr_results = compute_bmr_metrics(gt_answer_list, pred_answer_list)
                 bmr_results_list.append(bmr_results)
@@ -202,3 +237,27 @@ def write_data_to_txt(file_path, data):
     else:  # Create the file
         with open(file_path, 'w') as file:
             file.write(data)
+
+def write_json_log(file_path, entry):
+    """Append a prediction entry to the JSON log file."""
+    import os
+
+    # Create directory if it doesn't exist
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+    # Read existing data if file exists
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = []
+    else:
+        data = []
+
+    # Append new entry
+    data.append(entry)
+
+    # Write back to file
+    with open(file_path, 'w') as f:
+        json.dump(data, f, indent=2)

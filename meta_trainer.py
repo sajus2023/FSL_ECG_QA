@@ -9,9 +9,6 @@ from torch.nn import functional as F
 from meta_learner import MetaLearner
 from utils import *
 
-PATH = str(Path.cwd())
-MODELS_PATH = PATH + "/models/"
-
 class MetaTrainer(nn.Module):
     def __init__(self, args, experiment_id, is_pretrained, new_words=False):
         super(MetaTrainer, self).__init__()
@@ -26,16 +23,17 @@ class MetaTrainer(nn.Module):
         self.device = 'cuda:0'
         self.experiment_id=experiment_id
         self.model_weight = "{}.pt".format(experiment_id)
-        self.log_file_path = PATH + "/logs/log_{}.txt".format(experiment_id)
+        self.log_file_path = args.logs_path + "/log_{}.txt".format(experiment_id)
         self.new_words=new_words
         self.model_name=args.model_name
         self.mapper_type=args.mapper_type
+        self.models_path=args.models_path
         self.model = MetaLearner(model_name=self.model_name,prefix_length=self.prefix_length, seq_len=self.seq_len, seq_len_a=self.seq_len_a,
                                  new_words=self.new_words, mapper_type=self.mapper_type)
 
         # Loading pre-trained model
         if is_pretrained:
-            model_dict = torch.load(MODELS_PATH + self.model_weight, map_location=torch.device(self.device))
+            model_dict = torch.load(self.models_path + self.model_weight, map_location=torch.device(self.device))
             self.model.mapper_net.load_state_dict(model_dict['mapper_net'])
             
         self.model.to(self.device)
@@ -193,8 +191,8 @@ class MetaTrainer(nn.Module):
 
     def save_mapper_model(self,para=None):
         model_dict={'mapper_net': self.model.mapper_net.state_dict()}
-        torch.save(model_dict, os.path.join(MODELS_PATH, f"{self.experiment_id}{para}.pt"))                        
-        print("Model saved on path {}".format(MODELS_PATH))
+        torch.save(model_dict, os.path.join(self.models_path, f"{self.experiment_id}{para}.pt"))
+        print("Model saved on path {}".format(self.models_path))
 
 
 def write_data_to_txt(file_path, data):

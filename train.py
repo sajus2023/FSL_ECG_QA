@@ -19,13 +19,10 @@ if torch.cuda.is_available():
 else:
     print('Training on CPU!')
 
-PATH = str(Path.cwd())
-LOGS_PATH = PATH + "/logs/"
-
 def write_data_to_txt(file_path, data):
     # Create the directory if it doesn't exist
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    
+
     if os.path.exists(file_path):
         with open(file_path, 'a', newline='') as file:
             file.write(data)
@@ -52,7 +49,7 @@ def main_episodic():
     params = list(filter(lambda p: p.requires_grad, meta.model.parameters()))
     params_summed = sum(p.numel() for p in params)
     print("Total num of params: {} ".format(params_summed))
-    log_file_path = LOGS_PATH + "log_{}.txt".format(experiment_id)
+    log_file_path = args.logs_path + "/log_{}.txt".format(experiment_id)
     write_data_to_txt(log_file_path, "Experiment ID: {} Date: {}, {}-way, {}-shot (support), {}-shot (query), Mapper: {}".format(experiment_id, datetime.datetime.now(),args.n_way, args.k_spt, args.k_qry,args.mapper_type))
 
     class_qa, train_temp, test_temp = prepare_ecg_qa_data(args)  
@@ -71,7 +68,17 @@ def main_episodic():
                             pin_memory=True)
     
     for epoch in range(args.epoch):
+        print(f"\n{'='*60}")
+        print(f"EPOCH {epoch+1}/{args.epoch}")
+        print(f"{'='*60}\n")
+
+        total_steps = len(db_train)
         for step, batch in enumerate(db_train):
+            progress_pct = 100.0 * step / total_steps if total_steps > 0 else 0
+            print(f"\n{'─'*60}")
+            print(f"STEP {step}/{total_steps} ({progress_pct:.1f}% complete)")
+            print(f"{'─'*60}")
+
             (
                 x_spt, y_spt_q, y_spt_a, y_spt_mask_q, y_spt_mask_a, id_spt,
                 x_qry, y_qry_q, y_qry_a, y_qry_mask_q, y_qry_mask_a, qry_img_id
@@ -94,22 +101,36 @@ def main_episodic():
                 x_spt, y_spt_q, y_spt_a, y_spt_mask_q, y_spt_mask_a,
                 x_qry, y_qry_q, y_qry_a, y_qry_mask_q, y_qry_mask_a
             )
+            print(f"\n[Step {step}/{total_steps}] Completed! Acc: {accs[-1]:.4f}, Loss: {losses[-1]:.4f}")
 
             if step % 100 == 0:
                 print(
-                    f"------ Meta-training {args.n_way}-way, {args.k_spt}-shot ({args.k_qry}-query) "
-                    f"{args.mapper_type}-mapper {args.prefix_length}-prefix tokens------"
+                    f"\n{'*'*60}\n"
+                    f"CHECKPOINT - Step {step}/{total_steps}\n"
+                    f"  Config: {args.n_way}-way, {args.k_spt}-shot ({args.k_qry}-query)\n"
+                    f"  Mapper: {args.mapper_type}, Prefix tokens: {args.prefix_length}\n"
+                    f"  Accuracy: {accs}\n"
+                    f"  Losses: {losses}\n"
+                    f"{'*'*60}\n"
                 )
                 write_data_to_txt(
-                    file_path=LOGS_PATH + f"log_{experiment_id}.txt",
-                    data=f"Step: {step} \tTraining acc: {accs} \n"
+                    file_path=args.logs_path + f"/log_{experiment_id}.txt",
+                    data=f"Step: {step}/{total_steps} \tTraining acc: {accs} \n"
                 )
+                print(f"[Step {step}/{total_steps}] Saving model checkpoint...")
                 meta.save_mapper_model(para="")
+                print(f"[Step {step}/{total_steps}] Checkpoint saved!")
 
-            # Evaluation every 10 steps
+            # Evaluation every 400 steps
             if step % 400 == 0 and step != 0:
+                print(f"\n{'='*60}")
+                print(f"EVALUATION at Step {step}/{total_steps}")
+                print(f"{'='*60}\n")
                 test_accs_all = []
+                total_test_batches = len(db_test)
                 for test_step, test_batch in enumerate(db_test):
+                    if test_step % 10 == 0:
+                        print(f"  Test batch {test_step+1}/{total_test_batches}")
                     (
                         spt_x, spt_y_q, spt_y_a, spt_mask_q, spt_mask_a, spt_ids,
                         qry_x, qry_y_q, qry_y_a, qry_mask_q, qry_mask_a, qry_img_ids
@@ -135,8 +156,8 @@ def main_episodic():
                     test_accs_all.append(test_acc)
                 test_accs_all = np.stack(test_accs_all, axis=0).mean(axis=0).astype(np.float16)
                 print("------ Meta-test {}-way, {}-shot ({}-query) ------".format(args.n_way, args.k_spt, args.k_qry))
-                print("Step: {} \tTest acc: {} \n".format(step, test_accs_all))
-                write_data_to_txt(file_path=log_file_path, data="Step: {} \tTest acc: {} \n".format(step, test_accs_all))
+                print("Step: {}/{} \tTest acc: {} \n".format(step, total_steps, test_accs_all))
+                write_data_to_txt(file_path=log_file_path, data="Step: {}/{} \tTest acc: {} \n".format(step, total_steps, test_accs_all))
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
@@ -171,6 +192,8 @@ if __name__ == '__main__':
     argparser.add_argument('--update_step', type=int, help='task-level inner update steps', default=15)
     argparser.add_argument('--update_step_test', type=int, help='update steps for fine-tunning', default=15)
     argparser.add_argument('--num_workers', type=int, default=8)
+    argparser.add_argument('--models_path', type=str, default='')
+    argparser.add_argument('--logs_path', type=str, default='')
 
     args = argparser.parse_args()
 

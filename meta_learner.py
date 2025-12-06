@@ -51,12 +51,18 @@ class MetaLearner(nn.Module):
     def forward(self, ecg, tokens: torch.Tensor, mask: Optional[torch.Tensor] = None, mask_a: Optional[torch.Tensor] = None, fast_weights=None,
                 labels: Optional[torch.Tensor] = None, get_pred_tokens=True):
 
-        padding_mask = torch.zeros(ecg.shape[0], 12, 5000, dtype=torch.bool)
+        padding_mask = torch.zeros(ecg.shape[0], ecg.shape[1], ecg.shape[2], dtype=torch.bool)
         proj_clip = self.feature_extract(**{
                 'source': ecg,
                 'padding_mask': padding_mask
             })
         clip_prefix2 = proj_clip['encoder_out'].to('cuda:0')
+
+        # Pool the encoder output from (batch, seq_len, dim) to (batch, dim)
+        # by taking the mean over the sequence dimension
+        if clip_prefix2.dim() == 3:
+            clip_prefix2 = clip_prefix2.mean(dim=1)
+
         tokens_embed = self.get_gpt_embeddings(tokens).to('cuda:0')
         proj_clip = self.mapper_net(clip_prefix2, fast_weights).to('cuda:0')
         embedding_cat = torch.cat((proj_clip, tokens_embed), dim=1)

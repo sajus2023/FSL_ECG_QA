@@ -9,7 +9,7 @@ from utils import set_device
 from transformers import AutoTokenizer
 
 class MetaLearner(nn.Module):
-    def __init__(self, model_name,prefix_length, seq_len,seq_len_a, new_words=False,mapper_type="ATT"):
+    def __init__(self, model_name, ecg_encoder_checkpoint, prefix_length, seq_len,seq_len_a, new_words=False,mapper_type="ATT"):
         super(MetaLearner, self).__init__()
         self.device = set_device()
         self.prefix_length = prefix_length
@@ -32,7 +32,7 @@ class MetaLearner(nn.Module):
             param.requires_grad = False
         self.gpt_embedding_size = self.gpt.config.hidden_size
         
-        self.feature_extract = hydra_main()
+        self.feature_extract = hydra_main(ecg_encoder_checkpoint)
         for param in self.feature_extract.parameters():
             param.requires_grad = False
 

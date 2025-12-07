@@ -194,6 +194,7 @@ if __name__ == '__main__':
     argparser.add_argument('--num_workers', type=int, default=8)
     argparser.add_argument('--models_path', type=str, default='')
     argparser.add_argument('--logs_path', type=str, default='')
+    argparser.add_argument('--ecg_encoder_checkpoint', type=str, default='', help='path to the ecg encoder checkpoint file')
 
     args = argparser.parse_args()
 

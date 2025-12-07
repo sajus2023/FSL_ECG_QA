@@ -194,6 +194,7 @@ if __name__ == '__main__':
     argparser.add_argument('--update_step_test', type=int, help='update steps for fine-tunning', default=15)
     argparser.add_argument('--models_path', type=str, default='', help='path to saved model checkpoints')
     argparser.add_argument('--logs_path', type=str, default='', help='path to save logs')
+    argparser.add_argument('--ecg_encoder_checkpoint', type=str, default='', help='path to the ecg encoder checkpoint file')
 
     args = argparser.parse_args()
 

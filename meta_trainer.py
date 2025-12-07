@@ -30,7 +30,8 @@ class MetaTrainer(nn.Module):
         self.model_name=args.model_name
         self.mapper_type=args.mapper_type
         self.models_path=args.models_path
-        self.model = MetaLearner(model_name=self.model_name,prefix_length=self.prefix_length, seq_len=self.seq_len, seq_len_a=self.seq_len_a,
+        self.ecg_encoder_checkpoint=args.ecg_encoder_checkpoint
+        self.model = MetaLearner(model_name=self.model_name, ecg_encoder_checkpoint=self.ecg_encoder_checkpoint, prefix_length=self.prefix_length, seq_len=self.seq_len, seq_len_a=self.seq_len_a,
                                  new_words=self.new_words, mapper_type=self.mapper_type)
 
         # Loading pre-trained model
@@ -107,7 +108,7 @@ class MetaTrainer(nn.Module):
         corrects = [0 for _ in range(self.update_step_test + 1)]
 
         model_state_dict = deepcopy(self.model.state_dict())
-        model = MetaLearner(model_name=self.model_name, prefix_length=self.prefix_length, seq_len=self.seq_len, seq_len_a=self.seq_len_a,
+        model = MetaLearner(model_name=self.model_name, ecg_encoder_checkpoint=self.ecg_encoder_checkpoint, prefix_length=self.prefix_length, seq_len=self.seq_len, seq_len_a=self.seq_len_a,
                             new_words=self.new_words)
         model.load_state_dict(model_state_dict)
         model.to(self.device)

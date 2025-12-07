@@ -107,13 +107,17 @@ class MetaTrainer(nn.Module):
         a_seq_len = int(torch.sum(y_qry_mask_a[:, :, self.prefix_length:]))
         corrects = [0 for _ in range(self.update_step_test + 1)]
 
-        model_state_dict = deepcopy(self.model.state_dict())
-        model = MetaLearner(model_name=self.model_name, ecg_encoder_checkpoint=self.ecg_encoder_checkpoint, prefix_length=self.prefix_length, seq_len=self.seq_len, seq_len_a=self.seq_len_a,
-                            new_words=self.new_words)
-        model.load_state_dict(model_state_dict)
-        model.to(self.device)
+        #model_state_dict = deepcopy(self.model.state_dict())
+        #model = MetaLearner(model_name=self.model_name, ecg_encoder_checkpoint=self.ecg_encoder_checkpoint, prefix_length=self.prefix_length, seq_len=self.seq_len, seq_len_a=self.seq_len_a,
+        #                    new_words=self.new_words)
+        #model.load_state_dict(model_state_dict)
+        #model.to(self.device)
+        original_mapper_state = deepcopy(self.model.mapper_net.state_dict())
+        model = self.model
+
         task_num = x_spt.shape[0]
         for i in range(task_num):
+            model.mapper_net.load_state_dict(original_mapper_state)
             logits = model(x_spt[i], y_spt_q[i], y_spt_mask_q[i], y_spt_mask_a[i], fast_weights=list(model.mapper_net.parameters()), get_pred_tokens=False)
             y_spt_a_mask = y_spt_a[i][y_spt_mask_a[i][:, self.prefix_length:] == 1]
             loss = F.cross_entropy(logits.reshape(-1, self.model.gpt.vocab_size), y_spt_a_mask.flatten(),
@@ -217,7 +221,8 @@ class MetaTrainer(nn.Module):
             average_results_bmr = {}
             average_results_blue = {}
 
-        del model
+        #del model
+        self.model.mapper_net.load_state_dict(original_mapper_state)
         accs = np.array(corrects) / a_seq_len
 
         if calc_metrics:
